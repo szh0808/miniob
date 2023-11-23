@@ -43,7 +43,7 @@ RC CommandExecutor::execute(SQLStageEvent *sql_event)
     } break;
 
 	case StmtType::DROP_TABLE: {
-      CreateTableExecutor executor;
+      DropTableExecutor executor;
       return executor.execute(sql_event);
     } break;
 
