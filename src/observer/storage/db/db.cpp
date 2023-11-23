@@ -101,6 +101,32 @@ RC Db::create_table(const char *table_name, int attribute_count, const AttrInfoS
   return RC::SUCCESS;
 }
 
+RC Db::drop_table(const char *table_name) 
+{
+  RC rc = RC::SUCCESS;
+  
+  // 检查表是否存在
+  unordered_map<std::string, Table *>::iterator it = opened_tables_.find(table_name);
+  if (it == opened_tables_.end()) {
+    LOG_WARN("Table %s does not exist.", table_name);
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+
+  // 删除表
+  Table *table = it->second;
+  rc = table->drop(table_name);
+  if (rc != RC::SUCCESS) {
+    LOG_ERROR("Failed to drop table %s.", table_name);
+    return rc;
+  }
+
+  // 从打开的表列表中移除
+  opened_tables_.erase(it);
+  LOG_INFO("Drop table success. table name=%s", table_name);
+  
+  return RC::SUCCESS;
+}
+
 Table *Db::find_table(const char *table_name) const
 {
   std::unordered_map<std::string, Table *>::const_iterator iter = opened_tables_.find(table_name);

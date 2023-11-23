@@ -28,6 +28,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/table/table.h"
 #include "storage/table/table_meta.h"
 #include "storage/trx/trx.h"
+#include "storage/persist/persist.h"
 
 Table::~Table()
 {
@@ -121,6 +122,42 @@ RC Table::create(int32_t table_id, const char *path, const char *name, const cha
   LOG_INFO("Successfully create table %s:%s", base_dir, name);
   return rc;
 }
+
+RC Table::drop(const char *table_name) 
+{ 
+  RC rc = RC::SUCCESS;
+  PersistHandler persistHandler;
+
+  // 删除表的元数据
+  std::string data_file = base_dir_ + "/" + table_name + ".data";
+  std::string table_file = base_dir_ + "/" + table_name + ".table";
+  rc = persistHandler.remove_file(data_file.c_str());
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+  rc = persistHandler.remove_file(table_file.c_str()); 
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+  // 删除索引
+  for (auto index : indexes_) {
+    std::string index_file = base_dir_ + "/" + table_name + "-" + index->index_meta().name() + ".index";
+    rc = persistHandler.remove_file(index_file.c_str());
+    if (rc != RC::SUCCESS) {
+      return rc;
+    }
+  }
+  // 关闭disk_buffer
+  rc = data_buffer_pool_->close_file();
+  if (rc != RC::SUCCESS) {
+      return rc;
+  }
+  // 关闭record_handler
+  record_handler_->close();
+
+  return rc; 
+}
+
 
 RC Table::open(const char *meta_file, const char *base_dir)
 {

@@ -33,6 +33,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/types.h"
 #include "storage/buffer/frame.h"
 #include "storage/buffer/page.h"
+#include "disk_buffer_pool.h"
 
 class BufferPoolManager;
 class DiskBufferPool;
@@ -301,6 +302,7 @@ public:
   ~BufferPoolManager();
 
   RC create_file(const char *file_name);
+  RC remove_file(const char *file_name);
   RC open_file(const char *file_name, DiskBufferPool *&bp);
   RC close_file(const char *file_name);
 
